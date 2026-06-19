@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experimental Injury Risk Assessment - Youth Football</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col transition-colors duration-200">
+
+    <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
+        <div class="flex items-center space-x-3">
+            <span class="text-2xl">⚽</span>
+            <h1 class="text-xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+                <span data-i18n="nav-title">Experimental Risk Assessment</span>
+                <span class="text-xs font-mono px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200 font-bold">
+                    <span data-i18n="nav-accuracy">Experimental prototype</span>
+                </span>
+            </h1>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200/80 shadow-inner">
+                <button onclick="setLanguage('en')" id="lang-en" class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all duration-150 bg-white text-emerald-700 shadow-sm">EN</button>
+                <button onclick="setLanguage('es')" id="lang-es" class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all duration-150 text-slate-400 hover:text-slate-700">ES</button>
+            </div>
+            <div class="text-sm font-medium text-slate-400 hidden md:block" data-i18n="nav-subtitle">Artificial Intelligence Control Panel</div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-6 flex-grow w-full">
+        <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-medium text-amber-900" data-i18n="model-warning">
+            Experimental estimate based on derived labels. It is not a medical diagnosis and must not be used alone to restrict a player's activity.
+        </div>
+        
+        <div class="flex space-x-2 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm mb-8 max-w-md">
+            <button onclick="cambiarPestana('plantel')" id="btn-plantel" class="flex-1 py-2 px-4 rounded-lg font-bold text-sm transition-all bg-emerald-600 text-white shadow-sm" data-i18n="tab-squad">📋 Squad</button>
+            <button onclick="cambiarPestana('nuevo-niño')" id="btn-nuevo-niño" class="flex-1 py-2 px-4 rounded-lg font-bold text-sm transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-50" data-i18n="tab-register">🏃‍♂️ Register Player</button>
+            <button onclick="cambiarPestana('evaluar')" id="btn-evaluar" class="flex-1 py-2 px-4 rounded-lg font-bold text-sm transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-50" data-i18n="tab-evaluate">🎯 Evaluate Risk</button>
+        </div>
+
+        <section id="sec-plantel" class="space-y-6">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900" data-i18n="squad-title">Registered Football Players</h2>
+                        <p class="text-xs font-medium text-slate-400" data-i18n="squad-desc">Click on column headers with ↕ to sort the data grid</p>
+                    </div>
+                    <div class="relative w-full sm:w-72">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-sm">🔍</span>
+                        <input type="text" id="search-bar" oninput="filtrarPorNombre(this.value)" placeholder="Search player by name..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-1 focus:ring-emerald-500 transition">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-200/60">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs font-mono uppercase tracking-wider select-none">
+                                <th onclick="ordenarPor('id')" class="py-3.5 px-4 cursor-pointer hover:text-slate-900 transition">ID <span id="arrow-id" class="text-xs ml-1">↕</span></th>
+                                <th onclick="ordenarPor('nombre')" class="py-3.5 px-4 cursor-pointer hover:text-slate-900 transition"><span data-i18n="th-name">Name</span> <span id="arrow-nombre" class="text-xs ml-1">↕</span></th>
+                                <th onclick="ordenarPor('edad')" class="py-3.5 px-4 cursor-pointer hover:text-slate-900 transition"><span data-i18n="th-age">Age</span> <span id="arrow-edad" class="text-xs ml-1">↕</span></th>
+                                <th onclick="ordenarPor('posicion')" class="py-3.5 px-4 cursor-pointer hover:text-slate-900 transition"><span data-i18n="th-position">Position</span> <span id="arrow-posicion" class="text-xs ml-1">↕</span></th>
+                                <th onclick="ordenarPor('riesgo_predicho')" class="py-3.5 px-4 cursor-pointer hover:text-slate-900 transition"><span data-i18n="th-risk">Latest Predicted Risk</span> <span id="arrow-riesgo_predicho" class="text-xs ml-1">↕</span></th>
+                                <th class="py-3.5 px-4 text-slate-400 font-bold" data-i18n="th-actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-jugadores" class="divide-y divide-slate-100 text-sm text-slate-700">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="flex justify-between items-center mt-6 border-t border-slate-100 pt-4 text-sm text-slate-500">
+                    <div id="info-paginacion">Showing 0 to 0 of 0 logs</div>
+                    <div class="flex space-x-2">
+                        <button onclick="paginaAnterior()" id="btn-prev" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 font-bold transition disabled:opacity-30 disabled:cursor-not-allowed shadow-sm" data-i18n="btn-prev">Previous</button>
+                        <button onclick="paginaSiguiente()" id="btn-next" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 font-bold transition disabled:opacity-30 disabled:cursor-not-allowed shadow-sm" data-i18n="btn-next">Next</button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="sec-nuevo-niño" class="hidden max-w-xl mx-auto">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h2 class="text-lg font-bold mb-4 text-slate-900" data-i18n="reg-title">Manual Player Enrollment</h2>
+                <form id="form-jugador" class="space-y-4" onsubmit="guardarJugador(event)">
+                    <div>
+                        <label class="block text-xs uppercase font-mono text-slate-400 font-bold mb-1" data-i18n="reg-fullname">Full Name</label>
+                            <input type="text" id="reg-nombre" minlength="2" maxlength="150" autocomplete="name" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white transition">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs uppercase font-mono text-slate-400 font-bold mb-1" data-i18n="th-age">Age</label>
+                            <input type="number" id="reg-edad" min="5" max="100" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs uppercase font-mono text-slate-400 font-bold mb-1" data-i18n="th-position">Field Position</label>
+                            <select id="reg-posicion" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white transition font-bold text-slate-700">
+                                <option value="Arquero" data-i18n="opt-gk">Goalkeeper</option>
+                                <option value="Defensa" data-i18n="opt-def">Defender</option>
+                                <option value="Mediocampista" data-i18n="opt-mid">Midfielder</option>
+                                <option value="Delantero" data-i18n="opt-fwd">Forward</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl transition shadow-md shadow-emerald-100 uppercase tracking-wider text-xs" data-i18n="reg-submit">Save Player into Database</button>
+                </form>
+            </div>
+        </section>
+
+        <section id="sec-evaluar" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h2 class="text-lg font-bold mb-4 text-slate-900" data-i18n="ev-title">Continuous Technical Assessment Card</h2>
+                    <form id="form-evaluacion" class="space-y-6" onsubmit="ejecutarEvaluacion(event)">
+                        <div>
+                            <label class="block text-xs uppercase font-mono text-slate-400 font-bold mb-1" data-i18n="ev-select">Select Football Player</label>
+                            <select id="ev-jugador-id" onchange="cargarDatosJugadorEnFormulario(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 font-bold focus:outline-none focus:border-emerald-500 focus:bg-white transition">
+                            </select>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div><label class="text-xs font-semibold text-slate-500" data-i18n="lbl-weight">Weight (kg)</label><input type="number" step="0.01" min="20.01" max="200" id="ev-peso" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:bg-white"></div>
+                            <div><label class="text-xs font-semibold text-slate-500" data-i18n="lbl-height">Height (m)</label><input type="number" step="0.01" min="0.8" max="2.5" id="ev-talla" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:bg-white"></div>
+                            <div><label class="text-xs font-semibold text-slate-500">IMC</label><input type="number" step="0.01" id="ev-imc" readonly class="w-full bg-slate-100 border border-slate-200 rounded-xl p-2.5 text-slate-800 text-sm font-medium"></div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-4">
+                            <div><label class="text-xs font-semibold text-slate-500" data-i18n="lbl-sum3">SUM 3 Skinfolds (mm)</label><input type="number" step="0.01" min="0" max="300" id="ev-sum3" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:bg-white"></div>
+                            <div><label class="text-xs font-semibold text-slate-500" data-i18n="lbl-sum6">SUM 6 Skinfolds (mm)</label><input type="number" step="0.01" min="0" max="500" id="ev-sum6" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:bg-white"></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-slate-100 pt-4">
+                            <div><label class="text-xs font-semibold text-slate-500" data-i18n="lbl-waist">Waist Circum.</label><input type="number" step="0.01" min="20.01" max="250" id="ev-cintura" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:bg-white"></div>
+                            <div><label class="text-xs font-semibold text-slate-500" data-i18n="lbl-arm">Arm Circum.</label><input type="number" step="0.01" min="5.01" max="100" id="ev-brazo" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:bg-white"></div>
+                            <div><label class="text-xs font-semibold text-slate-500" data-i18n="lbl-thigh">Thigh Circum.</label><input type="number" step="0.01" min="5.01" max="150" id="ev-muslo" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:bg-white"></div>
+                            <div><label class="text-xs font-semibold text-slate-500" data-i18n="lbl-calf">Calf Circum.</label><input type="number" step="0.01" min="5.01" max="100" id="ev-pantorrilla" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:bg-white"></div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-4">
+                            <div><label class="text-xs font-semibold text-slate-500" data-i18n="lbl-hum">Humerus Diam.</label><input type="number" step="0.01" min="1.01" max="30" id="ev-humero" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:bg-white"></div>
+                            <div><label class="text-xs font-semibold text-slate-500" data-i18n="lbl-fem">Femur Diam.</label><input type="number" step="0.01" min="1.01" max="30" id="ev-femur" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:bg-white"></div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-emerald-100 pt-4 bg-emerald-50/40 p-4 rounded-2xl border border-emerald-100 shadow-sm">
+                            <div><label class="text-xs text-emerald-800 font-bold font-mono block mb-1" data-i18n="lbl-sleep">💤 SLEEP HOURS (Wellness)</label><input type="number" step="0.1" min="0" max="24" id="ev-sueno" required class="w-full bg-white border border-emerald-200 rounded-xl p-2.5 text-sm text-emerald-900 font-bold focus:outline-none focus:border-emerald-500"></div>
+                            <div><label class="text-xs text-emerald-800 font-bold font-mono block mb-1" data-i18n="lbl-load">🏃‍♂️ TRAINING LOAD (Foster)</label><input type="number" step="0.1" min="0" max="5000" id="ev-carga" required class="w-full bg-white border border-emerald-200 rounded-xl p-2.5 text-sm text-emerald-900 font-bold focus:outline-none focus:border-emerald-500"></div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-md shadow-emerald-100 transition uppercase tracking-wider text-xs" data-i18n="ev-submit">Process with Predictive AI Core</button>
+                    </form>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 flex flex-col justify-between min-h-[400px] shadow-sm lg:h-full lg:sticky lg:top-24">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900" data-i18n="mon-title">Core Inference Monitor</h2>
+                        <p class="text-xs font-medium text-slate-400 mb-6" data-i18n="mon-desc">Real-time biomechanical diagnostics emitted by the ML model.</p>
+                    </div>
+                    
+                    <div id="pantalla-diagnostico" class="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center flex-grow text-center transition-all duration-300">
+                        <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center border border-slate-200 mb-3 shadow-sm">
+                            <span class="relative flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                            </span>
+                        </div>
+                        <div class="text-sm font-bold text-slate-800 uppercase tracking-wider" data-i18n="mon-waiting">SYSTEM STANDBY</div>
+                        <div class="text-xs text-slate-400 mt-1 max-w-[200px]" data-i18n="mon-waiting-desc">Select a player and enter technical metrics to trigger intelligence scoring.</div>
+                    </div>
+                </div>  
+            </div>
+        </section>
+    </main>
+
+    <div id="modal-detalle" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white border border-slate-200 rounded-3xl max-w-xl w-full max-h-[92vh] overflow-y-auto shadow-2xl p-6 space-y-6">
+            
+            <div class="flex justify-between items-start border-b border-slate-100 pb-4">
+                <div>
+                    <h3 id="modal-nombre" class="text-xl font-bold tracking-tight text-slate-900">---</h3>
+                    <p id="modal-meta" class="text-xs font-mono text-emerald-600 font-bold mt-1">---</p>
+                </div>
+                <button onclick="cerrarModal()" class="text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200/60 p-2 rounded-xl text-xs transition font-bold" data-i18n="btn-close">✕ Close</button>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div class="bg-slate-50 border border-slate-200/60 p-3 rounded-xl"><span class="text-[10px] uppercase font-mono tracking-wider text-slate-400 block mb-0.5" data-i18n="m-mass">Body Mass</span><strong id="m-peso" class="text-base font-bold text-slate-800">--</strong></div>
+                <div class="bg-slate-50 border border-slate-200/60 p-3 rounded-xl"><span class="text-[10px] uppercase font-mono tracking-wider text-slate-400 block mb-0.5" data-i18n="m-height">Stature</span><strong id="m-talla" class="text-base font-bold text-slate-800">--</strong></div>
+                <div class="bg-slate-50 border border-slate-200/60 p-3 rounded-xl"><span class="text-[10px] uppercase font-mono tracking-wider text-slate-400 block mb-0.5">IMC Composition</span><strong id="m-imc" class="text-base font-bold text-slate-800">--</strong></div>
+                <div class="bg-slate-50 border border-slate-200/60 p-3 rounded-xl"><span class="text-[10px] uppercase font-mono tracking-wider text-slate-400 block mb-0.5" data-i18n="lbl-sum6-short">Sum 6 Skinfolds</span><strong id="m-sum6" class="text-base font-bold text-slate-800">--</strong></div>
+                <div class="bg-slate-50 border border-slate-200/60 p-3 rounded-xl"><span class="text-[10px] uppercase font-mono tracking-wider text-slate-400 block mb-0.5" data-i18n="m-sleep">Recent Sleep</span><strong id="m-sueno" class="text-base font-bold text-slate-800">--</strong></div>
+                <div class="bg-slate-50 border border-slate-200/60 p-3 rounded-xl"><span class="text-[10px] uppercase font-mono tracking-wider text-slate-400 block mb-0.5" data-i18n="m-load">Workload Index</span><strong id="m-carga" class="text-base font-bold text-slate-800">--</strong></div>
+            </div>
+
+            <div class="space-y-3">
+                <h4 class="text-[11px] font-mono tracking-widest uppercase text-slate-400 font-bold flex items-center gap-1.5">
+                    <span>🧠</span> <span data-i18n="m-xai">Experimental factor summary</span>
+                </h4>
+                
+                <div id="contenedor-diagnostico-premium" class="p-5 rounded-2xl border bg-slate-50 border-slate-200 text-slate-700">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span id="modal-emoji-estado" class="text-xl"></span>
+                        <h5 id="modal-badge-riesgo-premium" class="font-bold tracking-wide text-sm uppercase"></h5>
+                    </div>
+                    <p id="modal-explicacion-premium" class="text-sm leading-relaxed font-normal text-slate-600"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "/api";
+
+        function escapeHtml(value) {
+            return String(value ?? "").replace(/[&<>'"]/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            })[char]);
+        }
+
+        function apiHeaders() {
+            const headers = {'Content-Type': 'application/json'};
+            const apiKey = sessionStorage.getItem('apiKey');
+            if (apiKey) headers['X-API-Key'] = apiKey;
+            return headers;
+        }
+
+        function actualizarImc() {
+            const peso = parseFloat(document.getElementById('ev-peso').value);
+            const talla = parseFloat(document.getElementById('ev-talla').value);
+            document.getElementById('ev-imc').value =
+                Number.isFinite(peso) && Number.isFinite(talla) && talla > 0
+                    ? (peso / (talla * talla)).toFixed(2)
+                    : '';
+        }
+        
+        let cacheJugadores = []; 
+        let filtroBusqueda = ""; 
+        let columnaOrdenada = 'id';
+        let ordenAscendente = true;
+        let paginaActual = 1;
+        const registrosPorPagina = 30;
+        let currentLang = "en"; // Default initialization context
+
+        const dictionary = {
+            en: {
+                "nav-title": "Experimental Risk Assessment",
+                "nav-accuracy": "Experimental prototype",
+                "model-warning": "Experimental estimate based on derived labels. It is not a medical diagnosis and must not be used alone to restrict a player's activity.",
+                "nav-subtitle": "Artificial Intelligence Control Panel",
+                "tab-squad": "📋 Squad",
+                "tab-register": "🏃‍♂️ Register Player",
+                "tab-evaluate": "🎯 Evaluate Risk",
+                "squad-title": "Registered Football Players",
+                "squad-desc": "Click on column headers with ↕ to sort the data grid",
+                "th-name": "Name", "th-age": "Age", "th-position": "Position", "th-risk": "Latest Predicted Risk", "th-actions": "Actions",
+                "btn-prev": "Previous", "btn-next": "Next",
+                "reg-title": "Manual Player Enrollment", "reg-fullname": "Full Name", "reg-submit": "Save Player into Database",
+                "opt-gk": "Goalkeeper", "opt-def": "Defender", "opt-mid": "Midfielder", "opt-fwd": "Forward",
+                "ev-title": "Continuous Technical Assessment Card", "ev-select": "Select Football Player",
+                "lbl-weight": "Weight (kg)", "lbl-height": "Height (m)", "lbl-sum3": "SUM 3 Skinfolds (mm)", "lbl-sum6": "SUM 6 Skinfolds (mm)",
+                "lbl-waist": "Waist Circum.", "lbl-arm": "Arm Circum.", "lbl-thigh": "Thigh Circum.", "lbl-calf": "Calf Circum.",
+                "lbl-hum": "Humerus Diam.", "lbl-fem": "Femur Diam.", "lbl-sleep": "💤 SLEEP HOURS (Wellness)", "lbl-load": "🏃‍♂️ TRAINING LOAD (Foster)",
+                "ev-submit": "Process with Predictive AI Core", "mon-title": "Core Inference Monitor",
+                "mon-desc": "Real-time biomechanical diagnostics emitted by the ML model.",
+                "mon-waiting": "SYSTEM STANDBY", "mon-waiting-desc": "Select a player and enter technical metrics to trigger intelligence scoring.",
+                "btn-close": "✕ Close", "m-mass": "Body Mass", "m-height": "Stature", "lbl-sum6-short": "Sum 6 Skinfolds", "m-sleep": "Recent Sleep", "m-load": "Workload Index",
+                "m-xai": "Experimental factor summary",
+                "badge-low": "🟢 Low", "badge-med": "🟡 Medium", "badge-high": "🔴 High", "badge-none": "Not evaluated",
+                "pos-gk": "GOALKEEPER", "pos-def": "DEFENDER", "pos-mid": "MIDFIELDER", "pos-fwd": "FORWARD", "pos-none": "NO FIELD POSITION",
+                "xai-empty-title": "Athlete Without Active Assessment",
+                "xai-empty-body": "This player does not record recent anthropometric data in PostgreSQL. Please complete a new assessment ticket to deploy model scoring.",
+                "xai-low-title": "Core Verdict: Low Injury Risk",
+                "xai-low-body": (sueno, carga, peso, imc) => `Random Forest architecture determined an optimal biological state. The registered sleep pattern (${sueno} hrs) promotes complete metabolite clearance and muscle synthesis, while the Foster load index (${carga} a.u.) stays within safe elastic limits for a segmental configuration of ${peso} kg and BMI of ${imc}. Steady homeostasis.`,
+                "xai-med-title": "Core Verdict: Medium Risk (Fatigue Warning)",
+                "xai-med-body-sleep": (sueno, peso) => `AI triggered a warning flag due to a <b>restrictive sleep recovery phase of only ${sueno} hours</b>. Rest deprivation delays muscular glycogen synthesis for an athlete of ${peso} kg, decreasing lower-limb load damping capacities during sudden deceleration.`,
+                "xai-med-body-load": (carga, imc) => `The model identified an acute work overload. The <b>Training Load of ${carga} a.u.</b> crossed the baseline safety coefficient for an active BMI of ${imc}, compromising joint stability. Down-regulation prescribed.`,
+                "xai-med-body-gen": (sum6, sueno) => `Residual fatigue desynchronization detected. Structural bounds indicate high tensile stress considering skinfolds thickness (${sum6} mm) matching current physical hours (${sueno} hrs).`,
+                "xai-high-title": "Core Verdict: Critical Risk (Biomechanical Alert)",
+                "xai-high-body-crit": (carga, sueno, talla, sum6) => `<b>ML Critical Threshold Breached:</b> The model isolated a highly hazardous structural failure pattern: <b>High acute micro-stress of ${carga} a.u. overlapping severe sleep debt of ${sueno} hours</b>. This friction inhibits neuromuscular coordination for a stature of ${talla} m and a sum of folds of ${sum6} mm. Immediate rest required.`,
+                "xai-high-body-gen": (sum6, carga, talla) => `The model isolated tissue tension limits. The correlation between a 6-skinfold sum of ${sum6} mm and structural impacts of ${carga} a.u. has broken safety elasticity boundaries for a stature of ${talla} m. Halt impact loads immediately.`,
+                "mon-proc": "Processing vectors...", "mon-res": "Inference Result",
+                "mon-low-desc": "Player operating under steady adaptive homeostasis. Fatigue and sleep parameters balanced.",
+                "mon-med-desc": "Latent workload alert detected. Strategic load-shedding highly recommended.",
+                "mon-high-desc": "The experimental score is elevated. Review the measurements and consult a qualified professional.",
+                "alert-save": "⚽ Player saved successfully into database!", "alert-select": "Please select a player from the squad selection list.", "alert-error": "Network Connection Failure", "search-empty": (val) => `<tr><td colspan="6" class="py-12 text-center text-slate-400 font-medium text-sm">🔍 No players found matching the query "${val}".</td></tr>`,
+                "pag-info": (start, end, total) => `Showing entries <b>${start}</b> to <b>${end}</b> of <b>${total}</b> records`
+            },
+            es: {
+                "nav-title": "Evaluación Experimental de Riesgo",
+                "nav-accuracy": "Prototipo experimental",
+                "model-warning": "Estimación experimental basada en etiquetas derivadas. No es un diagnóstico médico ni debe usarse por sí sola para restringir la actividad de un jugador.",
+                "nav-subtitle": "Panel de Control de Inteligencia Artificial",
+                "tab-squad": "📋 Plantel",
+                "tab-register": "🏃‍♂️ Registrar Niño",
+                "tab-evaluate": "🎯 Evaluar Riesgo",
+                "squad-title": "Lista de Futbolistas Registrados",
+                "squad-desc": "Haz clic en los encabezados con ↕ para ordenar la tabla",
+                "th-name": "Nombre", "th-age": "Edad", "th-position": "Posición", "th-risk": "Último Riesgo Predicho", "th-actions": "Acciones",
+                "btn-prev": "Anterior", "btn-next": "Siguiente",
+                "reg-title": "Inscripción Manual de Futbolista", "reg-fullname": "Nombre Completo", "reg-submit": "Guardar Futbolista en Base de Datos",
+                "opt-gk": "Arquero", "opt-def": "Defensa", "opt-mid": "Mediocampista", "opt-fwd": "Delantero",
+                "ev-title": "Ficha Técnica de Evaluación Continua", "ev-select": "Seleccionar Futbolista",
+                "lbl-weight": "Peso (kg)", "lbl-height": "Talla (m)", "lbl-sum3": "SUM 3 Pliegues (mm)", "lbl-sum6": "SUM 6 Pliegues (mm)",
+                "lbl-waist": "Perím. Cintura", "lbl-arm": "Perím. Brazo", "lbl-thigh": "Perím. Muslo", "lbl-calf": "Perím. Pantorrilla",
+                "lbl-hum": "Diámetro Húmero", "lbl-fem": "Diámetro Fémur", "lbl-sleep": "💤 HORAS SUEÑO (Wellness)", "lbl-load": "🏃‍♂️ CARGA ENTRENAMIENTO (Foster)",
+                "ev-submit": "Procesar con Red Predictiva de IA", "mon-title": "Monitor de Inferencia Core",
+                "mon-desc": "Diagnóstico en tiempo real emitido por el modelo predictivo.",
+                "mon-waiting": "SISTEMA EN ESPERA", "mon-waiting-desc": "Seleccione un futbolista e ingrese las métricas para iniciar el análisis.",
+                "btn-close": "✕ Cerrar", "m-mass": "Masa Corporal", "m-height": "Estatura", "lbl-sum6-short": "Sum. 6 Pliegues", "m-sleep": "Sueño Reciente", "m-load": "Carga de Trabajo",
+                "m-xai": "Resumen experimental de factores",
+                "badge-low": "🟢 Bajo", "badge-med": "🟡 Medio", "badge-high": "🔴 Alto", "badge-none": "Sin evaluar",
+                "pos-gk": "ARQUERO", "pos-def": "DEFENSA", "pos-mid": "MEDIOCAMPISTA", "pos-fwd": "DELANTERO", "pos-none": "SIN POSICIÓN",
+                "xai-empty-title": "Atleta sin evaluación clínica",
+                "xai-empty-body": "Este futbolista no registra evaluaciones antropométricas vigentes en el sistema PostgreSQL. Por favor, asigne una nueva cartilla técnica desde el panel 'Evaluar Riesgo' para activar la inferencia del modelo.",
+                "xai-low-title": "Detalle: Riesgo Bajo de Lesión",
+                "xai-low-body": (sueno, carga, peso, imc) => `La arquitectura Random Forest determinó un estado biomecánico óptimo. El volumen de descanso registrado (${sueno} hrs) promueve el aclaramiento completo de metabolitos y la síntesis proteica del músculo, mientras que la Carga Foster (${carga} u.a.) se mantiene dentro de los coeficientes elásticos seguros para su antropometría de ${peso} kg con un IMC de ${imc}. Homeostasis estable.`,
+                "xai-empty-title": "Atleta sin evaluación clínica",
+                "xai-med-title": "Detalle: Riesgo Medio (Estado de Fatiga)",
+                "xai-med-body-sleep": (sueno, peso) => `La IA activó la bandera de advertencia debido a una <b>restricción en el sueño de recuperación de solo ${sueno} horas</b>. Reducir el descanso ralentiza la resíntesis de glucógeno muscular en atletas con peso de ${peso} kg, restándole capacidad de de absorción de impactos al tren inferior ante gestos de aceleración brusca.`,
+                "xai-med-body-load": (carga, imc) => `El modelo identificó una sobrecarga por picos agudos de trabajo. El volumen de <b>Carga de Entrenamiento de ${carga} u.a.</b> superó la tasa metabólica recomendada para su IMC de ${imc}, comprometiendo la estabilidad neuromuscular y sugiriendo una descarga preventiva.`,
+                "xai-med-body-gen": (sum6, sueno) => `Se identificó un desbalance por fatiga residual acumulada. Las correlaciones lineales entre los pliegues grasos (${sum6} mm) y las horas de descanso (${sueno} hrs) determinan que el tejido muscular opera en los límites de su rango fisiológico elástico.`,
+                "xai-high-title": "Detalle: Riesgo Crítico (Alerta Biomecánica)",
+                "xai-high-body-crit": (carga, sueno, talla, sum6) => `<b>Criterio Crítico de Machine Learning:</b> El algoritmo detectó un patrón altamente lesivo por estrés acumulado: <b>Alta carga aguda de trabajo de ${carga} u.a. combinada con un sueño insuficiente de solo ${sueno} horas</b>. Esta interacción deprime el control sensoriomotor para un canterano de estatura ${talla} m, exponiendo al atleta a fallas estructurales con una sumatoria de pliegues de ${sum6} mm. Exigir reposo reactivo inmediato.`,
+                "xai-high-body-gen": (sum6, carga, talla) => `El motor inteligente identificó una inminente propensión al daño estructural. La relación del sumatorio de pliegues (${sum6} mm) frente a las demandas físicas actuales de ${carga} u.a. superó el umbral seguro para una estatura de ${talla} m. Se prescribe la interrupción inmediata de cargas de impacto.`,
+                "mon-proc": "Procesando vectores...", "mon-res": "Resultado de Inferencia",
+                "mon-low-desc": "Atleta en homeostasis adaptativa estable. Coeficientes de fatiga y sueño balanceados.",
+                "mon-med-desc": "Alerta de sobrecarga latente. Se sugiere monitorear la dosificación de impactos.",
+                "mon-high-desc": "La puntuación experimental es elevada. Revise las mediciones y consulte a un profesional cualificado.",
+                "alert-save": "⚽ ¡Futbolista grabado con éxito!", "alert-select": "Por favor, seleccione un jugador de la lista.", "alert-error": "Error de Red", "search-empty": (val) => `<tr><td colspan="6" class="py-12 text-center text-slate-400 font-medium text-sm">🔍 No se encontraron futbolistas con el nombre "${val}".</td></tr>`,
+                "pag-info": (start, end, total) => `Mostrando registros del <b>${start}</b> al <b>${end}</b> de un total de <b>${total}</b>`
+            }
+        };
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.querySelectorAll("[data-i18n]").forEach(el => {
+                const key = el.getAttribute("data-i18n");
+                if (dictionary[lang][key]) { el.innerHTML = dictionary[lang][key]; }
+            });
+            
+            document.getElementById("search-bar").placeholder = currentLang === "en" ? "Search player by name..." : "Buscar futbolista por nombre...";
+
+            // Highlight language selector buttons UI
+            if (lang === "en") {
+                document.getElementById("lang-en").className = "px-2.5 py-1 text-xs font-bold rounded-lg transition-all duration-150 bg-white text-emerald-700 shadow-sm";
+                document.getElementById("lang-es").className = "px-2.5 py-1 text-xs font-bold rounded-lg transition-all duration-150 text-slate-400 hover:text-slate-700";
+            } else {
+                document.getElementById("lang-es").className = "px-2.5 py-1 text-xs font-bold rounded-lg transition-all duration-150 bg-white text-emerald-700 shadow-sm";
+                document.getElementById("lang-en").className = "px-2.5 py-1 text-xs font-bold rounded-lg transition-all duration-150 text-slate-400 hover:text-slate-700";
+            }
+            renderizarTabla();
+        }
+
+        function cambiarPestana(id) {
+            ['plantel', 'nuevo-niño', 'evaluar'].forEach(p => {
+                document.getElementById(`sec-${p}`).classList.add('hidden');
+                document.getElementById(`btn-${p}`).className = "flex-1 py-2 px-4 rounded-lg font-bold text-sm transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-50";
+            });
+            document.getElementById(`sec-${id}`).classList.remove('hidden');
+            document.getElementById(`btn-${id}`).className = "flex-1 py-2 px-4 rounded-lg font-bold text-sm transition-all bg-emerald-600 text-white shadow-sm";
+            if(id === 'plantel' || id === 'evaluar') cargarDatos();
+        }
+
+        function cargarDatosJugadorEnFormulario(id) {
+            const jugadorId = parseInt(id);
+            const jugador = cacheJugadores.find(j => j.id === jugadorId);
+            
+            const monitor = document.getElementById('pantalla-diagnostico');
+            monitor.className = "bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center flex-grow text-center";
+            monitor.innerHTML = `
+                <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center border border-slate-200 mb-3 shadow-sm">
+                    <span class="relative flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                    </span>
+                </div>
+                <div class="text-sm font-bold text-slate-800 uppercase tracking-wider">${dictionary[currentLang]["mon-waiting"]}</div>
+                <div class="text-xs text-slate-400 mt-1 max-w-[200px]">${dictionary[currentLang]["mon-waiting-desc"]}</div>
+            `;
+
+            if (!jugador) return;
+
+            document.getElementById('ev-peso').value = jugador.peso !== undefined && jugador.peso !== null ? jugador.peso : "";
+            document.getElementById('m-peso').innerText = jugador.peso !== undefined && jugador.peso !== null ? `${jugador.peso} kg` : "--";
+            document.getElementById('ev-talla').value = jugador.talla !== undefined && jugador.talla !== null ? jugador.talla : "";
+            actualizarImc();
+            document.getElementById('ev-sum3').value = jugador.sum_3_pl !== undefined && jugador.sum_3_pl !== null ? jugador.sum_3_pl : "";
+            document.getElementById('ev-sum6').value = jugador.sum_6_pl !== undefined && jugador.sum_6_pl !== null ? jugador.sum_6_pl : "";
+            document.getElementById('ev-cintura').value = jugador.perimetro_cintura !== undefined && jugador.perimetro_cintura !== null ? jugador.perimetro_cintura : "";
+            document.getElementById('ev-brazo').value = jugador.perimetro_brazo !== undefined && jugador.perimetro_brazo !== null ? jugador.perimetro_brazo : "";
+            document.getElementById('ev-muslo').value = jugador.perimetro_muslo !== undefined && jugador.perimetro_muslo !== null ? jugador.perimetro_muslo : "";
+            document.getElementById('ev-pantorrilla').value = jugador.perimetro_pantorrilla !== undefined && jugador.perimetro_pantorrilla !== null ? jugador.perimetro_pantorrilla : "";
+            document.getElementById('ev-humero').value = jugador.diametro_humero !== undefined && jugador.diametro_humero !== null ? jugador.diametro_humero : "";
+            document.getElementById('ev-femur').value = jugador.diametro_femur !== undefined && jugador.diametro_femur !== null ? jugador.diametro_femur : "";
+            document.getElementById('ev-sueno').value = jugador.horas_sueno !== undefined && jugador.horas_sueno !== null ? jugador.horas_sueno : "";
+            document.getElementById('ev-carga').value = jugador.carga_entrenamiento !== undefined && jugador.carga_entrenamiento !== null ? jugador.carga_entrenamiento : "";
+        }
+
+        async function cargarDatos() {
+            try {
+                const res = await fetch(`${API_URL}/jugadores`, {headers: apiHeaders()});
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                cacheJugadores = await res.json();
+                renderizarTabla();
+
+                const select = document.getElementById('ev-jugador-id');
+                select.replaceChildren(...cacheJugadores.map(j => {
+                    const option = document.createElement('option');
+                    option.value = j.id;
+                    option.textContent = `${j.nombre} (${translatePosition(j.posicion)})`;
+                    return option;
+                }));
+                
+                if (cacheJugadores.length > 0) {
+                    select.value = cacheJugadores[0].id;
+                    cargarDatosJugadorEnFormulario(cacheJugadores[0].id);
+                }
+            } catch (err) { console.error("Data mapping error:", err); }
+        }
+
+        function translatePosition(pos) {
+            if(!pos) return dictionary[currentLang]["pos-none"];
+            const lowPos = pos.toLowerCase();
+            if(lowPos.includes("arq") || lowPos.includes("gk") || lowPos.includes("goal")) return currentLang === "en" ? "Goalkeeper" : "Arquero";
+            if(lowPos.includes("def")) return currentLang === "en" ? "Defender" : "Defensa";
+            if(lowPos.includes("med") || lowPos.includes("vol") || lowPos.includes("mid")) return currentLang === "en" ? "Midfielder" : "Mediocampista";
+            if(lowPos.includes("del") || lowPos.includes("fwd") || lowPos.includes("ext") || lowPos.includes("tra")) return currentLang === "en" ? "Forward" : "Delantero";
+            return pos;
+        }
+
+        function filtrarPorNombre(texto) {
+            filtroBusqueda = texto.trim().toLowerCase();
+            paginaActual = 1; 
+            renderizarTabla();
+        }
+
+        function paginaAnterior() { if (paginaActual > 1) { paginaActual--; renderizarTabla(); } }
+        function paginaSiguiente() {
+            const jugadoresFiltrados = cacheJugadores.filter(j => j.nombre.toLowerCase().includes(filtroBusqueda));
+            const totalPaginas = Math.ceil(jugadoresFiltrados.length / registrosPorPagina);
+            if (paginaActual < totalPaginas) { paginaActual++; renderizarTabla(); }
+        }
+
+        function renderizarTabla() {
+            const tabla = document.getElementById('tabla-jugadores');
+            const jugadoresFiltrados = cacheJugadores.filter(j => j.nombre.toLowerCase().includes(filtroBusqueda));
+            const totalRegistros = jugadoresFiltrados.length;
+
+            if (totalRegistros === 0) {
+                tabla.innerHTML = dictionary[currentLang]["search-empty"](escapeHtml(document.getElementById('search-bar').value));
+                document.getElementById('info-paginacion').innerHTML = currentLang === "en" ? "Showing 0 of 0 entries" : "Mostrando 0 de 0 registros";
+                document.getElementById('btn-prev').disabled = true;
+                document.getElementById('btn-next').disabled = true;
+                actualizarFlechasUI();
+                return;
+            }
+
+            const indiceInicio = (paginaActual - 1) * registrosPorPagina;
+            const indiceFin = Math.min(indiceInicio + registrosPorPagina, totalRegistros);
+            const totalPaginas = Math.ceil(totalRegistros / registrosPorPagina);
+            const bloquePagina = jugadoresFiltrados.slice(indiceInicio, indiceFin);
+            
+            tabla.innerHTML = bloquePagina.map(j => {
+                let badge = `<span class="text-slate-400 font-medium">${dictionary[currentLang]['badge-none']}</span>`;
+                if (j.riesgo_predicho === 'Riesgo Bajo') badge = `<span class="px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full font-bold text-xs shadow-sm">${dictionary[currentLang]['badge-low']}</span>`;
+                if (j.riesgo_predicho === 'Riesgo Medio') badge = `<span class="px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-700 rounded-full font-bold text-xs shadow-sm">${dictionary[currentLang]['badge-med']}</span>`;
+                if (j.riesgo_predicho === 'Riesgo Alto') badge = `<span class="px-2.5 py-1 bg-rose-50 border border-rose-200 text-rose-700 rounded-full font-bold text-xs shadow-sm">${dictionary[currentLang]['badge-high']}</span>`;
+                
+                const labelAge = currentLang === "en" ? "years old" : "años";
+
+                return `<tr class="border-b border-slate-100 hover:bg-slate-50/50 transition">
+                    <td class="py-3.5 px-4 font-mono text-slate-400 font-bold">${j.id}</td>
+                    <td class="py-3.5 px-4 font-bold text-slate-900">${escapeHtml(j.nombre)}</td>
+                    <td class="py-3.5 px-4 font-medium">${j.edad} ${labelAge}</td>
+                    <td class="py-3.5 px-4 font-medium text-slate-500">${escapeHtml(translatePosition(j.posicion))}</td>
+                    <td class="py-3.5 px-4">${badge}</td>
+                    <td class="py-3.5 px-4">
+                        <button onclick="abrirInspeccion(${j.id})" class="px-2.5 py-1.5 bg-white border border-slate-200 text-slate-600 hover:text-emerald-700 hover:border-emerald-500 hover:bg-emerald-50/20 rounded-xl text-xs transition flex items-center gap-1.5 font-bold shadow-sm">
+                            👁️ <span data-i18n="th-actions">Details</span>
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            document.getElementById('info-paginacion').innerHTML = dictionary[currentLang]["pag-info"](indiceInicio + 1, indiceFin, totalRegistros);
+            document.getElementById('btn-prev').disabled = (paginaActual === 1);
+            document.getElementById('btn-next').disabled = (paginaActual === totalPaginas);
+            actualizarFlechasUI();
+        }
+
+        function abrirInspeccion(id) {
+            const jugador = cacheJugadores.find(j => j.id === id);
+            if (!jugador) return;
+
+            const posRaw = jugador.posicion || "null";
+            const posicionFormateada = translatePosition(posRaw).toUpperCase();
+
+            document.getElementById('modal-nombre').innerText = jugador.nombre || "Player";
+            document.getElementById('modal-meta').innerText = `ID: #0${jugador.id}  |  ${currentLang === 'en' ? 'CATEGORY' : 'CATEGORÍA'}: SUB-${jugador.edad || '--'}  |  ${currentLang === 'en' ? 'ROLE' : 'PUESTO'}: ${posicionFormateada}`;
+            
+            const peso = jugador.peso !== undefined && jugador.peso !== null ? jugador.peso : "--";
+            const talla = jugador.talla !== undefined && jugador.talla !== null ? jugador.talla : "--";
+            const imc = jugador.imc !== undefined && jugador.imc !== null ? jugador.imc : "--";
+            const sum6 = jugador.sum_6_pl !== undefined && jugador.sum_6_pl !== null ? jugador.sum_6_pl : "--";
+            
+            const sueno = jugador.horas_sueno !== undefined && jugador.horas_sueno !== null ? jugador.horas_sueno : 8;
+            const carga = jugador.carga_entrenamiento !== undefined && jugador.carga_entrenamiento !== null ? jugador.carga_entrenamiento : 400;
+            const riesgo = jugador.riesgo_predicho || "null";
+
+            document.getElementById('m-peso').innerText = peso !== "--" ? `${peso} kg` : "--";
+            document.getElementById('m-talla').innerText = talla !== "--" ? `${talla} m` : "--";
+            document.getElementById('m-imc').innerText = imc !== "--" ? `${imc}` : "--";
+            document.getElementById('m-sum6').innerText = sum6 !== "--" ? `${sum6} mm` : "--";
+            document.getElementById('m-sueno').innerText = `${sueno} hrs`;
+            document.getElementById('m-carga').innerText = `${carga} u.a.`;
+
+            const contenedor = document.getElementById('contenedor-diagnostico-premium');
+            const tituloEstado = document.getElementById('modal-badge-riesgo-premium');
+            const emojiEstado = document.getElementById('modal-emoji-estado');
+            const parrafoExplicacion = document.getElementById('modal-explicacion-premium');
+
+            let explicacionTexto = "";
+
+            if (riesgo === "null" || riesgo === "None" || !riesgo) {
+                contenedor.className = "p-5 rounded-2xl border bg-slate-50 border-slate-200 text-slate-500 shadow-inner";
+                if (emojiEstado) emojiEstado.innerText = "⚪";
+                if (tituloEstado) tituloEstado.innerText = dictionary[currentLang]["xai-empty-title"];
+                explicacionTexto = dictionary[currentLang]["xai-empty-body"];
+            } 
+            else if (riesgo === "Riesgo Bajo") {
+                contenedor.className = "p-5 rounded-2xl border bg-emerald-50 border-emerald-200 text-emerald-800 shadow-sm";
+                if (emojiEstado) emojiEstado.innerText = "🛡️";
+                if (tituloEstado) tituloEstado.innerText = dictionary[currentLang]["xai-low-title"];
+                explicacionTexto = dictionary[currentLang]["xai-low-body"](sueno, carga, peso, imc);
+            } 
+            else if (riesgo === "Riesgo Medio") {
+                contenedor.className = "p-5 rounded-2xl border bg-amber-50 border-amber-200 text-amber-800 shadow-sm";
+                if (emojiEstado) emojiEstado.innerText = "⚠️";
+                if (tituloEstado) tituloEstado.innerText = dictionary[currentLang]["xai-med-title"];
+                
+                if (parseFloat(sueno) < 7) {
+                    explicacionTexto = dictionary[currentLang]["xai-med-body-sleep"](sueno, peso);
+                } else if (parseFloat(carga) > 500) {
+                    explicacionTexto = dictionary[currentLang]["xai-med-body-load"](carga, imc);
+                } else {
+                    explicacionTexto = dictionary[currentLang]["xai-med-body-gen"](sum6, sueno);
+                }
+            } 
+            else if (riesgo === "Riesgo Alto") {
+                contenedor.className = "p-5 rounded-2xl border bg-rose-50 border-rose-200 text-rose-800 animate-pulse shadow-sm";
+                if (emojiEstado) emojiEstado.innerText = "🚨";
+                if (tituloEstado) tituloEstado.innerText = dictionary[currentLang]["xai-high-title"];
+                
+                if (parseFloat(carga) >= 500 || parseFloat(sueno) <= 6) {
+                    explicacionTexto = dictionary[currentLang]["xai-high-body-crit"](carga, sueno, talla, sum6);
+                } else {
+                    explicacionTexto = dictionary[currentLang]["xai-high-body-gen"](sum6, carga, talla);
+                }
+            }
+
+            if (parrafoExplicacion) parrafoExplicacion.innerHTML = explicacionTexto;
+            document.getElementById('modal-detalle').classList.remove('hidden');
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-detalle').classList.add('hidden');
+        }
+
+        function ordenarPor(columna) {
+            if (columnaOrdenada === columna) { ordenAscendente = !ordenAscendente; } else { columnaOrdenada = columna; ordenAscendente = true; }
+            const pesoRiesgo = { 'Riesgo Alto': 3, 'Riesgo Medio': 2, 'Riesgo Bajo': 1, null: 0, undefined: 0 };
+            cacheJugadores.sort((a, b) => {
+                let valA = a[columna]; let valB = b[columna];
+                if (columna === 'riesgo_predicho') { valA = pesoRiesgo[valA] || 0; valB = pesoRiesgo[valB] || 0; }
+                if (valA === null || valA === undefined) return 1; if (valB === null || valB === undefined) return -1;
+                if (typeof valA === 'number' && typeof valB === 'number') { return ordenAscendente ? valA - valB : valB - valA; } 
+                else { return ordenAscendente ? String(valA).localeCompare(String(valB)) : String(valB).localeCompare(String(valA)); }
+            });
+            renderizarTabla();
+        }
+
+        function actualizarFlechasUI() {
+            const columnas = ['id', 'nombre', 'edad', 'posicion', 'riesgo_predicho'];
+            columnas.forEach(col => {
+                const f = document.getElementById(`arrow-${col}`);
+                if (f) {
+                    if (col === columnaOrdenada) { f.innerHTML = ordenAscendente ? "▲" : "▼"; f.className = "text-xs ml-1 text-emerald-600 font-bold"; } 
+                    else { f.innerHTML = "↕"; f.className = "text-xs ml-1 text-slate-300"; }
+                }
+            });
+        }
+
+        async function guardarJugador(e) {
+            e.preventDefault();
+            const payload = {
+                nombre: document.getElementById('reg-nombre').value,
+                edad: parseInt(document.getElementById('reg-edad').value),
+                posicion: document.getElementById('reg-posicion').value
+            };
+            const res = await fetch(`${API_URL}/jugadores`, { method: 'POST', headers: apiHeaders(), body: JSON.stringify(payload) });
+            if(res.ok) { 
+                alert(dictionary[currentLang]["alert-save"]); 
+                document.getElementById('form-jugador').reset(); 
+                cambiarPestana('plantel'); 
+            } else {
+                const error = await res.json().catch(() => ({}));
+                alert(error.detail || dictionary[currentLang]["alert-error"]);
+            }
+        }
+
+        async function ejecutarEvaluacion(e) {
+            e.preventDefault();
+            const id = document.getElementById('ev-jugador-id').value;
+            if(!id) return alert(dictionary[currentLang]["alert-select"]);
+
+            const payload = {
+                peso_kg: parseFloat(document.getElementById('ev-peso').value),
+                talla_m: parseFloat(document.getElementById('ev-talla').value),
+                imc: parseFloat(document.getElementById('ev-imc').value),
+                sum_3_pl: parseFloat(document.getElementById('ev-sum3').value),
+                sum_6_pl: parseFloat(document.getElementById('ev-sum6').value),
+                perimetro_cintura: parseFloat(document.getElementById('ev-cintura').value),
+                perimetro_brazo_relajado: parseFloat(document.getElementById('ev-brazo').value),
+                perimetro_muslo: parseFloat(document.getElementById('ev-muslo').value),
+                perimetro_pantorrilla: parseFloat(document.getElementById('ev-pantorrilla').value),
+                diametro_humero: parseFloat(document.getElementById('ev-humero').value),
+                diametro_femur: parseFloat(document.getElementById('ev-femur').value),
+                horas_sueno: parseFloat(document.getElementById('ev-sueno').value),
+                carga_entrenamiento: parseFloat(document.getElementById('ev-carga').value)
+            };
+
+            const monitor = document.getElementById('pantalla-diagnostico');
+            monitor.className = "bg-white border border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center flex-grow shadow-inner";
+            monitor.innerHTML = `
+                <div class="animate-spin rounded-full h-8 w-8 border-2 border-emerald-500/20 border-t-emerald-600"></div>
+                <p class="text-xs font-mono text-slate-500 mt-3 tracking-wider uppercase">${dictionary[currentLang]["mon-proc"]}</p>
+            `;
+
+            try {
+                const res = await fetch(`${API_URL}/evaluar/${id}`, {
+                    method: 'POST',
+                    headers: apiHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+                let tarjetaHTML = "";
+
+                if (data.riesgo === "Riesgo Bajo") {
+                    monitor.className = "bg-emerald-50 border border-emerald-200 rounded-2xl p-6 flex flex-col items-center justify-center flex-grow transition-all duration-300 text-center shadow-sm";
+                    tarjetaHTML = `
+                        <div class="w-14 h-14 rounded-full bg-white border border-emerald-200 flex items-center justify-center text-2xl mb-4 shadow-sm">🛡️</div>
+                        <h4 class="text-xs font-mono tracking-widest text-emerald-700 font-bold uppercase mb-1">${dictionary[currentLang]["mon-res"]}</h4>
+                        <h3 class="text-2xl font-black text-emerald-600 tracking-tight">${currentLang === 'en' ? 'LOW RISK' : 'RIESGO BAJO'}</h3>
+                        <p class="text-xs text-emerald-700/80 mt-3 max-w-[240px] leading-relaxed font-medium">${dictionary[currentLang]["mon-low-desc"]}</p>
+                    `;
+                } else if (data.riesgo === "Riesgo Medio") {
+                    monitor.className = "bg-amber-50 border border-amber-200 rounded-2xl p-6 flex flex-col items-center justify-center flex-grow transition-all duration-300 text-center shadow-sm";
+                    tarjetaHTML = `
+                        <div class="w-14 h-14 rounded-full bg-white border border-amber-200 flex items-center justify-center text-2xl mb-4 shadow-sm">⚠️</div>
+                        <h4 class="text-xs font-mono tracking-widest text-amber-700 font-bold uppercase mb-1">${dictionary[currentLang]["mon-res"]}</h4>
+                        <h3 class="text-2xl font-black text-amber-600 tracking-tight">${currentLang === 'en' ? 'MEDIUM RISK' : 'RIESGO MEDIO'}</h3>
+                        <p class="text-xs text-amber-700/80 mt-3 max-w-[240px] leading-relaxed font-medium">${dictionary[currentLang]["mon-med-desc"]}</p>
+                    `;
+                } else if (data.riesgo === "Riesgo Alto") {
+                    monitor.className = "bg-rose-50 border border-rose-200 rounded-2xl p-6 flex flex-col items-center justify-center flex-grow transition-all duration-300 text-center animate-pulse shadow-sm";
+                    tarjetaHTML = `
+                        <div class="w-14 h-14 rounded-full bg-white border border-rose-200 flex items-center justify-center text-2xl mb-4 shadow-sm">🚨</div>
+                        <h4 class="text-xs font-mono tracking-widest text-rose-700 font-bold uppercase mb-1">${dictionary[currentLang]["mon-res"]}</h4>
+                        <h3 class="text-2xl font-black text-rose-600 tracking-tight">${currentLang === 'en' ? 'CRITICAL RISK' : 'RIESGO CRÍTICO'}</h3>
+                        <p class="text-xs text-rose-700/80 mt-3 max-w-[240px] leading-relaxed font-medium">${dictionary[currentLang]["mon-high-desc"]}</p>
+                    `;
+                }
+
+                monitor.innerHTML = tarjetaHTML;
+                cargarDatos(); 
+                
+            } catch (error) {
+                console.error(error);
+                monitor.className = "bg-rose-50 border border-rose-200 rounded-2xl p-6 flex flex-col items-center justify-center flex-grow text-center shadow-sm";
+                monitor.innerHTML = `<span class="text-2xl mb-2">❌</span><div class="text-sm text-rose-700 font-bold">${dictionary[currentLang]["alert-error"]}</div>`;
+            }
+        }
+
+        window.onload = () => {
+            document.getElementById('ev-peso').addEventListener('input', actualizarImc);
+            document.getElementById('ev-talla').addEventListener('input', actualizarImc);
+            setLanguage('en'); // Set English as default on layout boot context
+        };
+    </script>
+</body>
+</html>

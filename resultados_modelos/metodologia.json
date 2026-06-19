@@ -1,0 +1,29 @@
+{
+  "fuente": "BASE_DATOS_120_JUGADORES_CON_RIESGO.xlsx",
+  "filas": 120,
+  "test_size": 0.2,
+  "random_state": 42,
+  "features": [
+    "Peso(kg)",
+    "Talla (m)",
+    "IMC",
+    "SUM 3 PL",
+    "SUM 6 PL",
+    "Perimetro de cintura",
+    "Perimetro Brazo relajado",
+    "Perimetro de muslo",
+    "Perimetro de pantorrilla",
+    "Diametro de Humero",
+    "Diametro de Femur",
+    "Indice_Sobrecarga_Muscular",
+    "Horas_Sueno",
+    "Carga_Entrenamiento"
+  ],
+  "target": "Riesgo_Lesion",
+  "clases": [
+    "Riesgo Alto",
+    "Riesgo Bajo",
+    "Riesgo Medio"
+  ],
+  "nota": "Etiquetas Riesgo_Lesion generadas por el propio proyecto; resultados experimentales no clínicos."
+}
