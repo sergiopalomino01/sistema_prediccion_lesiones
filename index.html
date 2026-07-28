@@ -362,22 +362,24 @@
             if(id === 'plantel' || id === 'evaluar') cargarDatos();
         }
 
-        function cargarDatosJugadorEnFormulario(id) {
+        function cargarDatosJugadorEnFormulario(id, preserveMonitor = false) {
             const jugadorId = parseInt(id);
             const jugador = cacheJugadores.find(j => j.id === jugadorId);
             
-            const monitor = document.getElementById('pantalla-diagnostico');
-            monitor.className = "bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center flex-grow text-center";
-            monitor.innerHTML = `
-                <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center border border-slate-200 mb-3 shadow-sm">
-                    <span class="relative flex h-3 w-3">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                    </span>
-                </div>
-                <div class="text-sm font-bold text-slate-800 uppercase tracking-wider">${dictionary[currentLang]["mon-waiting"]}</div>
-                <div class="text-xs text-slate-400 mt-1 max-w-[200px]">${dictionary[currentLang]["mon-waiting-desc"]}</div>
-            `;
+            if (!preserveMonitor) {
+                const monitor = document.getElementById('pantalla-diagnostico');
+                monitor.className = "bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center flex-grow text-center";
+                monitor.innerHTML = `
+                    <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center border border-slate-200 mb-3 shadow-sm">
+                        <span class="relative flex h-3 w-3">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                        </span>
+                    </div>
+                    <div class="text-sm font-bold text-slate-800 uppercase tracking-wider">${dictionary[currentLang]["mon-waiting"]}</div>
+                    <div class="text-xs text-slate-400 mt-1 max-w-[200px]">${dictionary[currentLang]["mon-waiting-desc"]}</div>
+                `;
+            }
 
             if (!jugador) return;
 
@@ -397,7 +399,7 @@
             document.getElementById('ev-carga').value = jugador.carga_entrenamiento !== undefined && jugador.carga_entrenamiento !== null ? jugador.carga_entrenamiento : "";
         }
 
-        async function cargarDatos() {
+        async function cargarDatos(preserveMonitor = false) {
             try {
                 const res = await fetch(`${API_URL}/jugadores`, {headers: apiHeaders()});
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -405,6 +407,8 @@
                 renderizarTabla();
 
                 const select = document.getElementById('ev-jugador-id');
+                const previousSelectedId = select.value;
+
                 select.replaceChildren(...cacheJugadores.map(j => {
                     const option = document.createElement('option');
                     option.value = j.id;
@@ -413,8 +417,10 @@
                 }));
                 
                 if (cacheJugadores.length > 0) {
-                    select.value = cacheJugadores[0].id;
-                    cargarDatosJugadorEnFormulario(cacheJugadores[0].id);
+                    const stillExists = cacheJugadores.some(j => j.id === parseInt(previousSelectedId));
+                    const idToSelect = stillExists ? previousSelectedId : cacheJugadores[0].id;
+                    select.value = idToSelect;
+                    cargarDatosJugadorEnFormulario(idToSelect, preserveMonitor);
                 }
             } catch (err) { console.error("Data mapping error:", err); }
         }
@@ -675,7 +681,7 @@
                 }
 
                 monitor.innerHTML = tarjetaHTML;
-                cargarDatos(); 
+                cargarDatos(true); 
                 
             } catch (error) {
                 console.error(error);
